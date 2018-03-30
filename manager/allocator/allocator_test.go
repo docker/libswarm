@@ -206,7 +206,7 @@ func TestAllocator(t *testing.T) {
 	defer cancel()
 	taskWatch, cancel := state.Watch(s.WatchQueue(), api.EventUpdateTask{}, api.EventDeleteTask{})
 	defer cancel()
-	serviceWatch, cancel := state.Watch(s.WatchQueue(), api.EventUpdateService{}, api.EventDeleteService{})
+	serviceWatch, cancel := state.Watch(s.WatchQueue(), api.EventUpdateService{})
 	defer cancel()
 
 	// Start allocator
@@ -375,7 +375,9 @@ func TestAllocator(t *testing.T) {
 	watchNetwork(t, netWatch, false, isValidNetwork)
 
 	assert.NoError(t, s.Update(func(tx store.Tx) error {
-		assert.NoError(t, store.DeleteService(tx, "testServiceID2"))
+		s := store.GetService(tx, "testServiceID2")
+		s.MarkedForRemoval = true
+		assert.NoError(t, store.UpdateService(tx, s))
 		return nil
 	}))
 	watchService(t, serviceWatch, false, nil)
@@ -540,7 +542,9 @@ func TestAllocator(t *testing.T) {
 
 	// Now remove the conflicting service.
 	assert.NoError(t, s.Update(func(tx store.Tx) error {
-		assert.NoError(t, store.DeleteService(tx, s3.ID))
+		s := store.GetService(tx, s3.ID)
+		s.MarkedForRemoval = true
+		assert.NoError(t, store.UpdateService(tx, s))
 		return nil
 	}))
 	watchService(t, serviceWatch, false, nil)
@@ -812,7 +816,7 @@ func TestAllocatorRestoreForDuplicateIPs(t *testing.T) {
 	taskWatch, cancel := state.Watch(s.WatchQueue(), api.EventUpdateTask{}, api.EventDeleteTask{})
 	defer cancel()
 
-	serviceWatch, cancel := state.Watch(s.WatchQueue(), api.EventUpdateService{}, api.EventDeleteService{})
+	serviceWatch, cancel := state.Watch(s.WatchQueue(), api.EventUpdateService{})
 	defer cancel()
 
 	// Confirm tasks have no IPs that overlap with the services VIPs on restart
@@ -962,7 +966,7 @@ func TestAllocatorRestartNoEndpointSpec(t *testing.T) {
 	taskWatch, cancel := state.Watch(s.WatchQueue(), api.EventUpdateTask{}, api.EventDeleteTask{})
 	defer cancel()
 
-	serviceWatch, cancel := state.Watch(s.WatchQueue(), api.EventUpdateService{}, api.EventDeleteService{})
+	serviceWatch, cancel := state.Watch(s.WatchQueue(), api.EventUpdateService{})
 	defer cancel()
 
 	// Confirm tasks have no IPs that overlap with the services VIPs on restart
@@ -1253,10 +1257,12 @@ func TestNodeAllocator(t *testing.T) {
 			},
 		},
 	}
+
 	assert.NoError(t, s.Update(func(tx store.Tx) error {
 		assert.NoError(t, store.CreateNetwork(tx, n2))
 		return nil
 	}))
+
 	watchNetwork(t, netWatch, false, isValidNetwork)                                                    // overlayID2
 	watchNode(t, nodeWatch, false, isValidNode, node1, []string{"ingress", "overlayID1", "overlayID3"}) // node1
 	watchNode(t, nodeWatch, false, isValidNode, node2, []string{"ingress", "overlayID1", "overlayID3"}) // node2
@@ -1266,6 +1272,7 @@ func TestNodeAllocator(t *testing.T) {
 		assert.NoError(t, store.DeleteNetwork(tx, n2.ID))
 		return nil
 	}))
+
 	watchNetwork(t, netWatch, false, isValidNetwork)                                      // overlayID2
 	watchNode(t, nodeWatch, false, isValidNode, node1, []string{"ingress", "overlayID1"}) // node1
 	watchNode(t, nodeWatch, false, isValidNode, node2, []string{"ingress", "overlayID1"}) // node2
@@ -1299,6 +1306,7 @@ func TestNodeAllocator(t *testing.T) {
 		assert.NoError(t, store.CreateNetwork(tx, p))
 		return nil
 	}))
+
 	watchNetwork(t, netWatch, false, isValidNetwork) // bridge
 
 	s.View(func(tx store.ReadTx) {
