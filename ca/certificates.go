@@ -262,7 +262,7 @@ func (rca *RootCA) RequestAndSaveNewCertificates(ctx context.Context, kw KeyWrit
 		select {
 		case <-time.After(config.RetryInterval):
 		case <-ctx.Done():
-			return nil, nil, ctx.Err()
+			return nil, nil, errors.Wrap(ctx.Err(), "context done while trying to get remote signed certificate")
 		}
 	}
 	if err != nil {
@@ -314,7 +314,7 @@ func (rca *RootCA) RequestAndSaveNewCertificates(ctx context.Context, kw KeyWrit
 		select {
 		case <-time.After(config.RetryInterval):
 		case <-ctx.Done():
-			return nil, nil, ctx.Err()
+			return nil, nil, errors.Wrap(ctx.Err(), "context done while trying to get KEK update")
 		}
 	}
 	if err != nil {

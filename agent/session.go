@@ -1,13 +1,13 @@
 package agent
 
 import (
-	"errors"
 	"sync"
 	"time"
 
 	"github.com/docker/swarmkit/api"
 	"github.com/docker/swarmkit/connectionbroker"
 	"github.com/docker/swarmkit/log"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -208,7 +208,7 @@ func (s *session) heartbeat(ctx context.Context) error {
 		case <-s.closed:
 			return errSessionClosed
 		case <-ctx.Done():
-			return ctx.Err()
+			return errors.Wrap(ctx.Err(), "context done while waiting to send heartbeat")
 		}
 	}
 }
@@ -235,7 +235,7 @@ func (s *session) handleSessionMessage(ctx context.Context, msg *api.SessionMess
 	case <-s.closed:
 		return errSessionClosed
 	case <-ctx.Done():
-		return ctx.Err()
+		return errors.Wrap(ctx.Err(), "context done while waiting for sesssion message")
 	}
 }
 
@@ -259,7 +259,7 @@ func (s *session) logSubscriptions(ctx context.Context) error {
 			case <-s.closed:
 				return errSessionClosed
 			case <-ctx.Done():
-				return ctx.Err()
+				return errors.Wrap(ctx.Err(), "context done while parked in log subscription exit case")
 			}
 		}
 		if err != nil {
@@ -271,7 +271,7 @@ func (s *session) logSubscriptions(ctx context.Context) error {
 		case <-s.closed:
 			return errSessionClosed
 		case <-ctx.Done():
-			return ctx.Err()
+			return errors.Wrap(ctx.Err(), "context done while waiting for log subscription")
 		}
 	}
 }
@@ -356,7 +356,7 @@ func (s *session) watch(ctx context.Context) error {
 		case <-s.closed:
 			return errSessionClosed
 		case <-ctx.Done():
-			return ctx.Err()
+			return errors.Wrap(ctx.Err(), "context done while waiting for assignments")
 		}
 	}
 }
@@ -401,7 +401,7 @@ func (s *session) sendTaskStatuses(ctx context.Context, updates ...*api.UpdateTa
 	case <-s.closed:
 		return updates, ErrClosed
 	case <-ctx.Done():
-		return updates, ctx.Err()
+		return updates, errors.Wrap(ctx.Err(), "context done before sending task statuses")
 	}
 
 	client := api.NewDispatcherClient(s.conn.ClientConn)

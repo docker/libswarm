@@ -339,7 +339,7 @@ func (n *Node) SetAddr(ctx context.Context, addr string) error {
 				isLeader = true
 			}
 		case <-ctx.Done():
-			return ctx.Err()
+			return errors.Wrap(ctx.Err(), "context done wile waiting for this node to become a leader")
 		}
 	}
 
@@ -1250,7 +1250,7 @@ func (n *Node) TransferLeadership(ctx context.Context) error {
 		}
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return errors.Wrap(ctx.Err(), "context done while waiting to transfer leadership")
 		case <-ticker.C:
 		}
 	}
@@ -1530,7 +1530,7 @@ func (n *Node) LeaderConn(ctx context.Context) (*grpc.ClientConn, error) {
 				return nil, err
 			}
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil, errors.Wrap(ctx.Err(), "context done while waiting for connection to cluster leader")
 		}
 	}
 }
@@ -1851,7 +1851,7 @@ func (n *Node) processInternalRaftRequest(ctx context.Context, r *api.InternalRa
 		// if channel is closed, wait item was canceled, otherwise it was triggered
 		x, ok := <-ch
 		if !ok {
-			return nil, ctx.Err()
+			return nil, errors.Wrap(ctx.Err(), "context done while processing internal raft request")
 		}
 		return x.(proto.Message), nil
 	}
@@ -1882,7 +1882,7 @@ func (n *Node) configure(ctx context.Context, cc raftpb.ConfChange) error {
 		return nil
 	case <-ctx.Done():
 		n.wait.cancel(cc.ID)
-		return ctx.Err()
+		return errors.Wrap(ctx.Err(), "context done while waiting for raft configuration change to go through")
 	}
 }
 

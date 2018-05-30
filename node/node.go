@@ -536,7 +536,7 @@ func (n *Node) Stop(ctx context.Context) error {
 	case <-n.closed:
 		return nil
 	case <-ctx.Done():
-		return ctx.Err()
+		return errors.Wrap(ctx.Err(), "context done while waiting for (*Node).Stop")
 	}
 }
 
@@ -547,7 +547,7 @@ func (n *Node) Err(ctx context.Context) error {
 	case <-n.closed:
 		return n.err
 	case <-ctx.Done():
-		return ctx.Err()
+		return errors.Wrap(ctx.Err(), "context done while waiting for (*Node).Err")
 	}
 }
 
@@ -595,7 +595,7 @@ waitPeer:
 	// connection or peer was available. I think it's just an optimization.
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
+		return errors.Wrap(ctx.Err(), "context done before initializing agent")
 	default:
 	}
 
@@ -949,7 +949,7 @@ func (n *Node) waitRole(ctx context.Context, role string) error {
 		n.roleCond.Wait()
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return errors.Wrapf(ctx.Err(), "context done while waiting for node to have role %v", role)
 		default:
 		}
 	}
@@ -1067,7 +1067,7 @@ func (n *Node) runManager(ctx context.Context, securityConfig *ca.SecurityConfig
 		log.G(ctx).Info("manager removed from raft cluster, stopping manager")
 		clearData = true
 	case <-ctx.Done():
-		return false, ctx.Err()
+		return false, errors.Wrap(ctx.Err(), "context canceled, stopping manager")
 	}
 	return clearData, nil
 }
@@ -1119,7 +1119,7 @@ func (n *Node) superviseManager(ctx context.Context, securityConfig *ca.Security
 			case <-workerRole:
 				return nil
 			case <-ctx.Done():
-				return ctx.Err()
+				return errors.Wrap(ctx.Err(), "context done after manager stopped, while waiting to see if we'd get a worker role")
 			}
 
 			if !wasRemoved {
@@ -1149,7 +1149,7 @@ func (n *Node) superviseManager(ctx context.Context, securityConfig *ca.Security
 				log.G(ctx).Warn("failed to get worker role after manager stop, restarting manager")
 			case <-workerRole:
 			case <-ctx.Done():
-				return ctx.Err()
+				return errors.Wrap(ctx.Err(), "context done while waiting for role change after certificate renewal")
 			}
 			return nil
 		}()
