@@ -4476,6 +4476,15 @@ file {
       json_name: "global"
     }
     field {
+      name: "manager"
+      number: 5
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".docker.swarmkit.v1.RoleManagerService"
+      oneof_index: 0
+      json_name: "manager"
+    }
+    field {
       name: "update"
       number: 6
       label: LABEL_OPTIONAL
@@ -4526,6 +4535,16 @@ file {
   }
   message_type {
     name: "GlobalService"
+  }
+  message_type {
+    name: "RoleManagerService"
+    field {
+      name: "replicas"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "replicas"
+    }
   }
   message_type {
     name: "TaskSpec"

@@ -147,6 +147,7 @@
 		ServiceSpec
 		ReplicatedService
 		GlobalService
+		RoleManagerService
 		TaskSpec
 		ResourceReference
 		GenericRuntimeSpec
