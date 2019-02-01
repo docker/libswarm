@@ -2391,6 +2391,16 @@ file {
         type_name: ".docker.swarmkit.v1.Mount.BindOptions.Propagation"
         json_name: "propagation"
       }
+      field {
+        name: "nonrecursive"
+        number: 2
+        label: LABEL_OPTIONAL
+        type: TYPE_BOOL
+        options {
+          65004: "NonRecursive"
+        }
+        json_name: "nonrecursive"
+      }
       enum_type {
         name: "Propagation"
         value {
@@ -3825,6 +3835,9 @@ file {
     }
   }
   message_type {
+    name: "RuntimeTarget"
+  }
+  message_type {
     name: "SecretReference"
     field {
       name: "secret_id"
@@ -3877,6 +3890,15 @@ file {
       type_name: ".docker.swarmkit.v1.FileTarget"
       oneof_index: 0
       json_name: "file"
+    }
+    field {
+      name: "runtime"
+      number: 4
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".docker.swarmkit.v1.RuntimeTarget"
+      oneof_index: 0
+      json_name: "runtime"
     }
     oneof_decl {
       name: "target"
@@ -4054,6 +4076,14 @@ file {
         type: TYPE_STRING
         oneof_index: 0
         json_name: "registry"
+      }
+      field {
+        name: "Config"
+        number: 3
+        label: LABEL_OPTIONAL
+        type: TYPE_STRING
+        oneof_index: 0
+        json_name: "Config"
       }
       oneof_decl {
         name: "source"
@@ -9029,6 +9059,13 @@ file {
       type: TYPE_UINT64
       json_name: "nodes"
     }
+    field {
+      name: "learners"
+      number: 2
+      label: LABEL_REPEATED
+      type: TYPE_UINT64
+      json_name: "learners"
+    }
   }
   message_type {
     name: "ConfChange"
@@ -9174,6 +9211,10 @@ file {
     value {
       name: "ConfChangeUpdateNode"
       number: 2
+    }
+    value {
+      name: "ConfChangeAddLearnerNode"
+      number: 3
     }
   }
   options {

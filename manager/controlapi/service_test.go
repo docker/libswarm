@@ -623,6 +623,10 @@ func TestCreateService(t *testing.T) {
 	r, err = ts.Client.CreateService(context.Background(), &api.CreateServiceRequest{Spec: spec})
 	assert.Error(t, err)
 	assert.Equal(t, codes.AlreadyExists, testutils.ErrorCode(err))
+
+	// Make sure the error contains "name conflicts with an existing object" for
+	// backward-compatibility with older clients doing string-matching...
+	assert.Contains(t, err.Error(), "name conflicts with an existing object")
 }
 
 func TestSecretValidation(t *testing.T) {
@@ -765,6 +769,24 @@ func TestConfigValidation(t *testing.T) {
 		_, err = ts.Client.CreateService(context.Background(), &api.CreateServiceRequest{Spec: serviceSpec})
 		assert.NoError(t, err)
 	}
+
+	// test config references with RuntimeTarget
+	configRefCredSpec := createConfig(t, ts, "credentialspec", "credentialspec")
+	configRefCredSpec.Target = &api.ConfigReference_Runtime{
+		Runtime: &api.RuntimeTarget{},
+	}
+	serviceSpec = createServiceSpecWithConfigs("runtimetarget", configRefCredSpec)
+	serviceSpec.Task.GetContainer().Privileges = &api.Privileges{
+		CredentialSpec: &api.Privileges_CredentialSpec{
+			Source: &api.Privileges_CredentialSpec_Config{
+				Config: configRefCredSpec.ConfigID,
+			},
+		},
+	}
+	_, err = ts.Client.CreateService(
+		context.Background(), &api.CreateServiceRequest{Spec: serviceSpec},
+	)
+	assert.NoError(t, err)
 
 	// test config target conflicts on update
 	serviceSpec1 := createServiceSpecWithConfigs("service5", configRef2, configRef3)
@@ -932,19 +954,6 @@ func TestUpdateService(t *testing.T) {
 	})
 	assert.Error(t, err)
 	assert.Equal(t, codes.InvalidArgument, testutils.ErrorCode(err))
-}
-
-func TestUpdateServiceMarkedForRemoval(t *testing.T) {
-	ts := newTestServer(t)
-	defer ts.Stop()
-
-	service := createService(t, ts, "name", "image", 1)
-	r, err := ts.Client.RemoveService(context.Background(), &api.RemoveServiceRequest{ServiceID: service.ID})
-	assert.NoError(t, err)
-	assert.NotNil(t, r)
-
-	_, err = ts.Client.UpdateService(context.Background(), &api.UpdateServiceRequest{ServiceID: service.ID, Spec: &service.Spec, ServiceVersion: &service.Meta.Version})
-	assert.Equal(t, codes.FailedPrecondition, testutils.ErrorCode(err))
 }
 
 func TestServiceUpdateRejectNetworkChange(t *testing.T) {
