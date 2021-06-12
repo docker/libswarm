@@ -9,6 +9,7 @@ import (
 	"github.com/docker/swarmkit/api"
 	"github.com/docker/swarmkit/cmd/swarmctl/common"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -36,7 +37,8 @@ var (
 			if err != nil {
 				return err
 			}
-			r, err := c.ListTasks(common.Context(cmd), &api.ListTasksRequest{})
+			r, err := c.ListTasks(common.Context(cmd), &api.ListTasksRequest{},
+				grpc.MaxCallRecvMsgSize(common.DefaultRecvSizeForListResponse))
 			if err != nil {
 				return err
 			}

@@ -12,6 +12,7 @@ import (
 	"github.com/dustin/go-humanize"
 	gogotypes "github.com/gogo/protobuf/types"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 )
 
 type secretSorter []*api.Secret
@@ -50,7 +51,8 @@ var (
 				return err
 			}
 
-			resp, err := client.ListSecrets(common.Context(cmd), &api.ListSecretsRequest{})
+			resp, err := client.ListSecrets(common.Context(cmd), &api.ListSecretsRequest{},
+				grpc.MaxCallRecvMsgSize(common.DefaultRecvSizeForListResponse))
 			if err != nil {
 				return err
 			}
